@@ -9,11 +9,13 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import org.hibernate.SessionFactory;
 
 public class EmployerService {
   private final GenericDao genericDao;
   private final EmployerDao employerDao;
   private final TransactionHelper transactionHelper;
+
 
   public EmployerService(GenericDao genericDao, EmployerDao employerDao, TransactionHelper transactionHelper) {
     this.genericDao = genericDao;
@@ -59,7 +61,7 @@ public class EmployerService {
     if (employer.getVacancies().stream().noneMatch(v -> checkIfWordIsBad(v.getTitle()))) {
       return;
     }
-
+    //entityManager.persist(employer);
     // TODO: сделать сохранение состояния работодателя и его вакансий
     // сейчас Employer в detached состоянии, т.к. сессия закрылась.
     // это нужно учитывать при последующей работе с таковым
@@ -69,6 +71,8 @@ public class EmployerService {
     transactionHelper.inTransaction(() -> {
       employer.setBlockTime(LocalDateTime.now());
       employer.getVacancies().forEach(v -> v.setArchivingTime(LocalDateTime.now()));
+      genericDao.update(employer);
+
     });
   }
 
